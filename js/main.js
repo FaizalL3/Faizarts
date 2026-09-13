@@ -47,17 +47,18 @@ function buildLightboxContent(card) {
     playBtn.setAttribute('aria-label', `Play timelapse of ${title}`);
     playBtn.innerHTML = `
       <span class="lightbox__play-icon">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
           <path d="M5 3L19 11L5 19V3Z" fill="#16151A"/>
         </svg>
       </span>
+      <span class="lightbox__play-label">Play timelapse</span>
     `;
 
     playBtn.addEventListener('click', () => {
       const video = document.createElement('video');
       video.src = timelapse;
       video.className = 'lightbox__media';
-      video.controls = true;
+      video.controls = true; // native controls include a working scrub bar
       video.autoplay = true;
       lightboxFrame.innerHTML = '';
       lightboxFrame.appendChild(video);
@@ -103,7 +104,7 @@ if (lightbox) {
 
 // ============================================
 // Art card interaction — click to open lightbox,
-// hover 5s to swap the still image for the timelapse video.
+// hover 3s to swap the still image for the timelapse video.
 //
 // Exposed as a named function so gallery.js can re-run it on
 // cards it builds dynamically after fetching /images from GitHub.
@@ -149,7 +150,7 @@ function attachArtCardBehavior(cards) {
           mediaEl.currentTime = 0;
           mediaEl.play().catch(() => {});
         }
-      }, 5000);
+      }, 3000);
     });
 
     card.addEventListener('mouseleave', () => {

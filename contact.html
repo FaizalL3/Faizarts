@@ -11,12 +11,12 @@
   <style>
     .contact-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: var(--space-md);
       align-items: stretch;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 900px) {
       .contact-grid { grid-template-columns: 1fr; }
     }
 
@@ -59,20 +59,18 @@
       word-break: break-word;
     }
 
-    .contact-showcase {
-      margin-top: var(--space-md);
-      min-height: 260px;
-      max-height: 640px;
-      background: #1f1e24;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .contact-card--image {
       overflow: hidden;
+      background: #1f1e24;
       padding: var(--space-sm);
-      color: var(--muted);
-      font-size: 0.9rem;
+    }
+
+    .contact-card--image img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
     }
   </style>
 </head>
@@ -120,6 +118,12 @@
             <span class="contact-card__detail">discord.gg/wThntgCP</span>
           </a>
 
+          <div class="contact-card contact-card--image" id="contact-showcase">
+            <!-- gallery.js fills this automatically once you've picked a
+                 "Contact" image in admin.html — this text shows until then -->
+            Image coming soon
+          </div>
+
           <a
             class="contact-card"
             href="mailto:faizalillustrationns@gmail.com"
@@ -134,12 +138,6 @@
             <span class="contact-card__label">Email</span>
             <span class="contact-card__detail">faizalillustrationns@gmail.com</span>
           </a>
-        </div>
-
-        <div class="contact-showcase" id="contact-showcase">
-          <!-- gallery.js fills this automatically once you've picked a
-               "Contact" image in admin.html — this text shows until then -->
-          Image coming soon
         </div>
 
       </div>
