@@ -2,7 +2,7 @@
 // CONFIG — must match admin.js
 // ============================================
 const GALLERY_REPO_OWNER = 'FaizalL3';
-const GALLERY_REPO_NAME = 'Faizalillustrations';
+const GALLERY_REPO_NAME = 'Faizarts';
 const GALLERY_BRANCH = 'main';
 const GALLERY_IMAGES_PATH = 'images';
 

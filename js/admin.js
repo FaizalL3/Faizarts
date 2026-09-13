@@ -2,7 +2,7 @@
 // CONFIG — adjust these to match your repo
 // ============================================
 const REPO_OWNER = 'FaizalL3';
-const REPO_NAME = 'Faizalillustrations';
+const REPO_NAME = 'Faizarts';
 const REPO_BRANCH = 'main';
 const IMAGES_PATH = 'images'; // folder in the repo where uploads land
 
