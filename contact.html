@@ -73,6 +73,13 @@
       object-fit: contain;
     }
 
+    /* Discord and Email keep the lift + coral border on hover — this
+       image box shouldn't, since it's just a display piece, not a link. */
+    .contact-card--image:hover {
+      border-color: var(--line);
+      transform: none;
+    }
+
     .contact-showcase-wrap {
       display: flex;
       justify-content: center;

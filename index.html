@@ -40,6 +40,11 @@
         <a href="prices.html" class="btn btn--ghost">See prices</a>
       </div>
 
+      <div class="status-badge status-badge--open" id="status-badge">
+        <span class="status-badge__dot"></span>
+        <span class="status-badge__text">Commissions Open</span>
+      </div>
+
       <!-- Faizal: drop your story here -->
       <div class="hero__story">
         <!-- Your story goes here -->
@@ -132,7 +137,6 @@
 
   <footer class="footer wrap">
     <span>&copy; 2026 Faizal Illustrations</span>
-    <span>Commissions open</span>
   </footer>
 
   <!-- ============ LIGHTBOX ============ -->
@@ -149,6 +153,7 @@
   <script src="js/gallery.js"></script>
   <script>
     renderGallery('#home-gallery-grid', 3, 'featured');
+    renderCommissionStatus('#status-badge');
   </script>
 </body>
 </html>

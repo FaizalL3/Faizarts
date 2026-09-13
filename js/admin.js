@@ -27,6 +27,7 @@ gateForm.addEventListener('submit', (e) => {
     gate.style.display = 'none';
     adminMain.classList.add('is-visible');
     if (typeof loadManageList === 'function') loadManageList();
+    if (typeof refreshStatusToggle === 'function') refreshStatusToggle();
   } else {
     gateError.textContent = 'Incorrect password.';
     gateInput.value = '';
@@ -371,6 +372,7 @@ const CHIBI_PATH = `${IMAGES_PATH}/chibi.json`;
 const HALFBODY_PATH = `${IMAGES_PATH}/halfbody.json`;
 const FULLBODY_PATH = `${IMAGES_PATH}/fullbody.json`;
 const CONTACT_PATH = `${IMAGES_PATH}/contact.json`;
+const STATUS_PATH = 'status.json'; // lives at the repo root, not under /images
 const MAX_FEATURED = 3; // matches the homepage preview grid size
 const MAX_CATEGORY_IMAGE = 1; // one example image per price category
 
@@ -445,6 +447,29 @@ async function loadContactKeys(token) {
 }
 async function saveContactKeys(token, keys) {
   return saveKeyListFile(token, CONTACT_PATH, keys, 'Update contact page image via admin panel');
+}
+
+async function loadCommissionStatus(token) {
+  const res = await fetch(
+    `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${STATUS_PATH}?ref=${REPO_BRANCH}&_=${Date.now()}`,
+    { headers: token ? { Authorization: `Bearer ${token}` } : {}, cache: 'no-store' }
+  );
+  if (res.status === 404) return true; // no file yet — default to open
+  if (!res.ok) throw new Error(`Could not load status.json (status ${res.status})`);
+  const data = await res.json();
+  try {
+    const decoded = decodeURIComponent(escape(atob(data.content)));
+    const parsed = JSON.parse(decoded);
+    return parsed.open !== false;
+  } catch {
+    return true;
+  }
+}
+
+async function saveCommissionStatus(token, isOpen) {
+  const json = JSON.stringify({ open: isOpen }, null, 2);
+  const base64 = btoa(unescape(encodeURIComponent(json)));
+  return commitFileToRepo(token, STATUS_PATH, base64, `Mark commissions ${isOpen ? 'open' : 'closed'} via admin panel`);
 }
 
 async function fetchImagesFolder(token) {
@@ -833,3 +858,56 @@ async function loadManageList() {
 }
 
 refreshManageBtn.addEventListener('click', loadManageList);
+
+// ============================================
+// Commission status toggle
+// ============================================
+const statusToggleBtn = document.getElementById('status-toggle');
+let currentStatusOpen = true;
+
+function updateStatusToggleUI() {
+  if (!statusToggleBtn) return;
+  statusToggleBtn.textContent = currentStatusOpen
+    ? 'Commissions: Open (click to close)'
+    : 'Commissions: Closed (click to open)';
+  statusToggleBtn.style.borderColor = currentStatusOpen ? '#3fb950' : '#f85149';
+  statusToggleBtn.style.color = currentStatusOpen ? '#3fb950' : '#f85149';
+}
+
+async function refreshStatusToggle() {
+  if (!statusToggleBtn) return;
+  const token = getToken();
+  statusToggleBtn.textContent = 'Loading…';
+  try {
+    currentStatusOpen = await loadCommissionStatus(token);
+    updateStatusToggleUI();
+  } catch (err) {
+    statusToggleBtn.textContent = 'Could not load status — retry';
+  }
+}
+
+if (statusToggleBtn) {
+  statusToggleBtn.addEventListener('click', async () => {
+    const token = getToken();
+    if (!token) {
+      logLine('No GitHub token saved — paste one above first.', 'is-error');
+      return;
+    }
+
+    const next = !currentStatusOpen;
+    statusToggleBtn.disabled = true;
+    statusToggleBtn.textContent = 'Saving…';
+
+    try {
+      await saveCommissionStatus(token, next);
+      currentStatusOpen = next;
+      updateStatusToggleUI();
+      logLine(`Commissions marked ${next ? 'open' : 'closed'}.`, 'is-success');
+    } catch (err) {
+      logLine(`Failed to update commission status: ${err.message}`, 'is-error');
+      updateStatusToggleUI(); // restore previous label/color
+    } finally {
+      statusToggleBtn.disabled = false;
+    }
+  });
+}

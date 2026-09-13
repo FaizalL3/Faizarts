@@ -10,6 +10,7 @@ const GALLERY_IMAGES_PATH = 'images';
 // since the GitHub Contents API itself doesn't give a direct CDN url
 // for unauthenticated, no-extra-request access.
 const RAW_BASE = `https://raw.githubusercontent.com/${GALLERY_REPO_OWNER}/${GALLERY_REPO_NAME}/${GALLERY_BRANCH}/${GALLERY_IMAGES_PATH}`;
+const RAW_BASE_ROOT = `https://raw.githubusercontent.com/${GALLERY_REPO_OWNER}/${GALLERY_REPO_NAME}/${GALLERY_BRANCH}`;
 
 const STILL_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
 const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov'];
@@ -245,4 +246,30 @@ async function renderCategoryExample(containerSelector, categoryFile, fitMode = 
   }
 
   container.appendChild(img);
+}
+
+// ============================================
+// Commission status badge (homepage)
+// ============================================
+async function loadCommissionStatus() {
+  try {
+    const res = await fetch(`${RAW_BASE_ROOT}/status.json`, { cache: 'no-store' });
+    if (!res.ok) return true; // no file yet — default to open
+    const data = await res.json();
+    return data.open !== false;
+  } catch {
+    return true; // default to open if anything goes wrong
+  }
+}
+
+async function renderCommissionStatus(containerSelector) {
+  const container = document.querySelector(containerSelector);
+  if (!container) return;
+
+  const isOpen = await loadCommissionStatus();
+  const textEl = container.querySelector('.status-badge__text');
+
+  container.classList.remove('status-badge--open', 'status-badge--closed');
+  container.classList.add(isOpen ? 'status-badge--open' : 'status-badge--closed');
+  if (textEl) textEl.textContent = isOpen ? 'Commissions Open' : 'Commissions Closed';
 }

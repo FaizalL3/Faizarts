@@ -285,6 +285,40 @@ button {
   animation: rise 0.8s var(--ease) 0.3s forwards;
 }
 
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: var(--space-md);
+  padding: 0.5rem 1.25rem;
+  border-radius: 100px;
+  border: 1.5px solid;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0;
+  animation: rise 0.8s var(--ease) 0.4s forwards;
+}
+
+.status-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.status-badge--open {
+  background: rgba(63, 185, 80, 0.12);
+  border-color: #3fb950;
+  color: #3fb950;
+}
+
+.status-badge--closed {
+  background: rgba(248, 81, 73, 0.12);
+  border-color: #f85149;
+  color: #f85149;
+}
+
 .hero__story {
   max-width: 640px;
   margin: var(--space-lg) auto 0;
