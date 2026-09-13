@@ -370,6 +370,7 @@ const VISIBLE_PATH = `${IMAGES_PATH}/visible.json`;
 const CHIBI_PATH = `${IMAGES_PATH}/chibi.json`;
 const HALFBODY_PATH = `${IMAGES_PATH}/halfbody.json`;
 const FULLBODY_PATH = `${IMAGES_PATH}/fullbody.json`;
+const CONTACT_PATH = `${IMAGES_PATH}/contact.json`;
 const MAX_FEATURED = 3; // matches the homepage preview grid size
 const MAX_CATEGORY_IMAGE = 1; // one example image per price category
 
@@ -439,6 +440,13 @@ async function saveFullBodyKeys(token, keys) {
   return saveKeyListFile(token, FULLBODY_PATH, keys, 'Update full body example image via admin panel');
 }
 
+async function loadContactKeys(token) {
+  return loadKeyListFile(token, CONTACT_PATH);
+}
+async function saveContactKeys(token, keys) {
+  return saveKeyListFile(token, CONTACT_PATH, keys, 'Update contact page image via admin panel');
+}
+
 async function fetchImagesFolder(token) {
   const res = await fetch(
     `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${IMAGES_PATH}?ref=${REPO_BRANCH}`,
@@ -455,6 +463,7 @@ async function fetchImagesFolder(token) {
     'chibi.json',
     'halfbody.json',
     'fullbody.json',
+    'contact.json',
   ]);
   return Array.isArray(data) ? data.filter((f) => f.type === 'file' && !metaFiles.has(f.name)) : [];
 }
@@ -554,7 +563,7 @@ function buildToggleCheckbox({ label, key, currentKeysRef, saveFn, maxCount, onL
   return wrap;
 }
 
-function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyKeys, fullBodyKeys) {
+function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyKeys, fullBodyKeys, contactKeys) {
   manageList.innerHTML = '';
 
   if (files.length === 0) {
@@ -570,12 +579,14 @@ function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyK
   const currentChibiRef = [chibiKeys.slice()];
   const currentHalfBodyRef = [halfBodyKeys.slice()];
   const currentFullBodyRef = [fullBodyKeys.slice()];
+  const currentContactRef = [contactKeys.slice()];
   // one promise-chain queue per list, shared by every checkbox for that list
   const featuredQueueRef = [Promise.resolve()];
   const visibleQueueRef = [Promise.resolve()];
   const chibiQueueRef = [Promise.resolve()];
   const halfBodyQueueRef = [Promise.resolve()];
   const fullBodyQueueRef = [Promise.resolve()];
+  const contactQueueRef = [Promise.resolve()];
 
   files.forEach((file) => {
     const row = document.createElement('div');
@@ -615,6 +626,7 @@ function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyK
     let chibiLabel = null;
     let halfBodyLabel = null;
     let fullBodyLabel = null;
+    let contactLabel = null;
     if (isImage) {
       const key = baseKeyFromFilename(file.name);
 
@@ -672,6 +684,17 @@ function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyK
         offLabel: `Removed ${file.name} as the Full Body example.`,
         queueRef: fullBodyQueueRef,
       });
+
+      contactLabel = buildToggleCheckbox({
+        label: 'Contact',
+        key,
+        currentKeysRef: currentContactRef,
+        saveFn: saveContactKeys,
+        maxCount: MAX_CATEGORY_IMAGE,
+        onLabel: `${file.name} is now shown on the Contact page.`,
+        offLabel: `Removed ${file.name} from the Contact page.`,
+        queueRef: contactQueueRef,
+      });
     }
 
     const deleteBtn = document.createElement('button');
@@ -726,6 +749,7 @@ function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyK
             { ref: currentChibiRef, queueRef: chibiQueueRef, saveFn: saveChibiKeys, label: 'Chibi example' },
             { ref: currentHalfBodyRef, queueRef: halfBodyQueueRef, saveFn: saveHalfBodyKeys, label: 'Half Body example' },
             { ref: currentFullBodyRef, queueRef: fullBodyQueueRef, saveFn: saveFullBodyKeys, label: 'Full Body example' },
+            { ref: currentContactRef, queueRef: contactQueueRef, saveFn: saveContactKeys, label: 'Contact' },
           ];
 
           listsToClean.forEach(({ ref, queueRef, saveFn, label }) => {
@@ -756,6 +780,7 @@ function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyK
     if (chibiLabel) row.appendChild(chibiLabel);
     if (halfBodyLabel) row.appendChild(halfBodyLabel);
     if (fullBodyLabel) row.appendChild(fullBodyLabel);
+    if (contactLabel) row.appendChild(contactLabel);
     row.appendChild(deleteBtn);
     manageList.appendChild(row);
   });
@@ -772,6 +797,7 @@ async function loadManageList() {
     { load: loadChibiKeys, save: saveChibiKeys, label: 'Chibi example' },
     { load: loadHalfBodyKeys, save: saveHalfBodyKeys, label: 'Half Body example' },
     { load: loadFullBodyKeys, save: saveFullBodyKeys, label: 'Full Body example' },
+    { load: loadContactKeys, save: saveContactKeys, label: 'Contact' },
   ];
 
   try {

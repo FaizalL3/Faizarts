@@ -133,8 +133,9 @@
           </a>
         </div>
 
-        <div class="contact-showcase">
-          <!-- Faizal: drop your third image here -->
+        <div class="contact-showcase" id="contact-showcase">
+          <!-- gallery.js fills this automatically once you've picked a
+               "Contact" image in admin.html — this text shows until then -->
           Image coming soon
         </div>
 
@@ -148,5 +149,9 @@
   </footer>
 
   <script src="js/main.js"></script>
+  <script src="js/gallery.js"></script>
+  <script>
+    renderCategoryExample('#contact-showcase', 'contact.json');
+  </script>
 </body>
 </html>
