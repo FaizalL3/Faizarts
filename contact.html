@@ -61,13 +61,16 @@
 
     .contact-showcase {
       margin-top: var(--space-md);
-      aspect-ratio: 16 / 7;
+      min-height: 260px;
+      max-height: 640px;
       background: #1f1e24;
       border: 1px solid var(--line);
       border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+      padding: var(--space-sm);
       color: var(--muted);
       font-size: 0.9rem;
     }
@@ -151,7 +154,7 @@
   <script src="js/main.js"></script>
   <script src="js/gallery.js"></script>
   <script>
-    renderCategoryExample('#contact-showcase', 'contact.json');
+    renderCategoryExample('#contact-showcase', 'contact.json', 'contain');
   </script>
 </body>
 </html>

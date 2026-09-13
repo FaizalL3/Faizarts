@@ -206,7 +206,7 @@ async function loadCategoryKey(filename) {
  * Leaves the existing placeholder text alone if nothing's picked yet
  * or the image can't be found, so the Prices page never breaks.
  */
-async function renderCategoryExample(containerSelector, categoryFile) {
+async function renderCategoryExample(containerSelector, categoryFile, fitMode = 'cover') {
   const container = document.querySelector(containerSelector);
   if (!container) return;
 
@@ -228,8 +228,21 @@ async function renderCategoryExample(containerSelector, categoryFile) {
   const img = document.createElement('img');
   img.src = piece.stillUrl;
   img.alt = piece.title;
-  img.style.width = '100%';
-  img.style.height = '100%';
-  img.style.objectFit = 'cover';
+
+  if (fitMode === 'contain') {
+    // shows the whole drawing, scaled down to fit, nothing cropped —
+    // used for the Contact page since that art can be any orientation
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '100%';
+    img.style.width = 'auto';
+    img.style.height = 'auto';
+    img.style.objectFit = 'contain';
+  } else {
+    // fills the fixed-ratio price-card box, cropping as needed
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+  }
+
   container.appendChild(img);
 }
