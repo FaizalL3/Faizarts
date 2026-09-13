@@ -13,16 +13,20 @@
 </head>
 <body>
 
-  <!-- ============ PASSWORD GATE ============ -->
+  <!-- ============ TOKEN GATE ============ -->
   <div class="admin-gate" id="admin-gate">
     <div class="admin-gate__box">
       <h1 class="admin-gate__title">Admin Access</h1>
+      <p class="page-head__sub" style="margin-bottom: var(--space-sm);">
+        Paste your GitHub token — it's checked against the repo right
+        here, then kept only in this browser.
+      </p>
       <form id="gate-form">
         <input
           type="password"
           id="gate-input"
           class="admin-gate__input"
-          placeholder="Password"
+          placeholder="Fine-grained personal access token"
           autocomplete="off"
         />
         <button type="submit" class="btn btn--primary" style="width: 100%;">Enter</button>
@@ -35,30 +39,17 @@
   <main class="admin-main" id="admin-main">
     <div class="wrap">
 
-      <header class="admin-section">
-        <span class="admin-section__label">Faizarts</span>
-        <h1 class="page-head__title">Upload Artwork</h1>
-        <p class="page-head__sub">
-          Drag images in, rename if needed, then commit them straight
-          to the repo's <code>/images</code> folder.
-        </p>
-      </header>
-
-      <!-- Token -->
-      <section class="admin-section">
-        <span class="admin-section__label">GitHub token</span>
-        <div class="token-row">
-          <input
-            type="password"
-            id="token-input"
-            placeholder="Paste your fine-grained personal access token"
-            autocomplete="off"
-          />
-          <button class="btn btn--ghost" id="token-save">Save</button>
-          <button class="btn btn--ghost" id="token-clear">Clear</button>
+      <header class="admin-section" style="display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-sm); flex-wrap: wrap;">
+        <div>
+          <span class="admin-section__label">Faizarts</span>
+          <h1 class="page-head__title">Upload Artwork</h1>
+          <p class="page-head__sub">
+            Drag images in, rename if needed, then commit them straight
+            to the repo's <code>/images</code> folder.
+          </p>
         </div>
-        <p class="token-status" id="token-status"></p>
-      </section>
+        <button class="btn btn--ghost" id="logout-btn" style="flex-shrink: 0;">Log out</button>
+      </header>
 
       <!-- Commission status -->
       <section class="admin-section">

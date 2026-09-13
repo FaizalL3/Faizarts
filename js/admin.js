@@ -7,42 +7,25 @@ const REPO_BRANCH = 'main';
 const IMAGES_PATH = 'images'; // folder in the repo where uploads land
 
 // ============================================
-// Admin page password gate
-// NOTE: this is NOT real security. It only hides the upload UI from
-// casual visitors poking around your site. Anyone who opens dev tools
-// and reads admin.js can see the check below. The actual protection on
-// your repo is the GitHub token itself — keep that private.
+// Token-gated access
+// The GitHub token IS the password: pasting a token with real write
+// access to this repo is what unlocks the admin UI below. Nothing
+// secret lives in this file — the token only ever sits in this
+// browser's local storage, and only after you paste it in yourself.
+// This still isn't a lock on the *page* (anyone can view this file's
+// source), but it is a real lock on being able to *do* anything —
+// every upload, delete, or toggle requires a token GitHub itself
+// accepts as having write access to the repo.
 // ============================================
-const ADMIN_PASSWORD = 'changeme'; // ← change this before you publish
+const TOKEN_KEY = 'faizal_admin_gh_token';
 
 const gate = document.getElementById('admin-gate');
 const gateInput = document.getElementById('gate-input');
 const gateError = document.getElementById('gate-error');
 const gateForm = document.getElementById('gate-form');
+const gateSubmitBtn = gateForm.querySelector('button[type="submit"]');
 const adminMain = document.getElementById('admin-main');
-
-gateForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  if (gateInput.value === ADMIN_PASSWORD) {
-    gate.style.display = 'none';
-    adminMain.classList.add('is-visible');
-    if (typeof loadManageList === 'function') loadManageList();
-    if (typeof refreshStatusToggle === 'function') refreshStatusToggle();
-  } else {
-    gateError.textContent = 'Incorrect password.';
-    gateInput.value = '';
-  }
-});
-
-// ============================================
-// Token handling (client-side, local storage)
-// ============================================
-const TOKEN_KEY = 'faizal_admin_gh_token';
-
-const tokenInput = document.getElementById('token-input');
-const tokenSave = document.getElementById('token-save');
-const tokenClear = document.getElementById('token-clear');
-const tokenStatus = document.getElementById('token-status');
+const logoutBtn = document.getElementById('logout-btn');
 
 function getToken() {
   return localStorage.getItem(TOKEN_KEY) || '';
@@ -63,39 +46,66 @@ async function verifyToken(token) {
   return res.ok;
 }
 
-async function refreshTokenStatus() {
-  const token = getToken();
-  if (!token) {
-    tokenStatus.textContent = 'No token saved.';
-    tokenStatus.className = 'token-status';
-    return;
-  }
-  tokenStatus.textContent = 'Checking…';
-  const ok = await verifyToken(token);
-  if (ok) {
-    tokenStatus.textContent = 'Connected to repo.';
-    tokenStatus.className = 'token-status is-connected';
-  } else {
-    tokenStatus.textContent = 'Token invalid or lacks access — check it and try again.';
-    tokenStatus.className = 'token-status is-error';
-  }
+function unlockAdmin() {
+  gate.style.display = 'none';
+  adminMain.classList.add('is-visible');
+  if (typeof loadManageList === 'function') loadManageList();
+  if (typeof refreshStatusToggle === 'function') refreshStatusToggle();
 }
 
-tokenSave.addEventListener('click', () => {
-  const value = tokenInput.value.trim();
-  if (!value) return;
-  setToken(value);
-  tokenInput.value = '';
-  refreshTokenStatus();
+gateForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const token = gateInput.value.trim();
+  if (!token) return;
+
+  gateError.textContent = '';
+  gateSubmitBtn.disabled = true;
+  gateSubmitBtn.textContent = 'Checking…';
+
+  let ok = false;
+  try {
+    ok = await verifyToken(token);
+  } catch {
+    ok = false;
+  }
+
+  gateSubmitBtn.disabled = false;
+  gateSubmitBtn.textContent = 'Enter';
+  gateInput.value = '';
+
+  if (ok) {
+    setToken(token);
+    unlockAdmin();
+  } else {
+    gateError.textContent = "That token didn't work — check it has access to this repo and try again.";
+  }
 });
 
-tokenClear.addEventListener('click', () => {
-  clearToken();
-  refreshTokenStatus();
-});
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    clearToken();
+    location.reload();
+  });
+}
 
-// run once on load (in case admin page reloads with main already visible — won't normally happen since gate resets, but harmless)
-refreshTokenStatus();
+// Auto-unlock on return visits if a still-valid token is already
+// saved in this browser — saves re-pasting it every time on your own
+// device. A revoked or expired token just falls back to the gate.
+(async () => {
+  const saved = getToken();
+  if (!saved) return;
+  let ok = false;
+  try {
+    ok = await verifyToken(saved);
+  } catch {
+    ok = false;
+  }
+  if (ok) {
+    unlockAdmin();
+  } else {
+    clearToken();
+  }
+})();
 
 // ============================================
 // Drag & drop queue
