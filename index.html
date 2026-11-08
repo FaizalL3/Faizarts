@@ -29,6 +29,8 @@
 
     <!-- ============ HERO ============ -->
     <section class="hero">
+      <div class="hero__bg" id="hero-bg"></div>
+      <div class="hero__overlay"></div>
       <h1 class="hero__mark">Faizarts</h1>
       <p class="hero__sub">
         Custom character illustration — from quick chibi pieces to full
@@ -154,6 +156,7 @@
   <script>
     renderGallery('#home-gallery-grid', 3, 'featured');
     renderCommissionStatus('#status-badge');
+    initHeroBackground('#hero-bg');
   </script>
 </body>
 </html>

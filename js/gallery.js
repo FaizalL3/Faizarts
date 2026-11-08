@@ -273,3 +273,144 @@ async function renderCommissionStatus(containerSelector) {
   container.classList.add(isOpen ? 'status-badge--open' : 'status-badge--closed');
   if (textEl) textEl.textContent = isOpen ? 'Commissions Open' : 'Commissions Closed';
 }
+
+// ============================================
+// Hero background rotation (homepage)
+// Plays a looping slideshow of picked images/GIFs behind the hero
+// text, crossfading to black between each one.
+//   - static images (png/jpg/webp): shown for 5s with a slow pan
+//   - GIFs: played through their full natural loop once, then advance
+// ============================================
+function loadBackgroundKeys() {
+  return loadKeyListFromRaw('background.json');
+}
+
+/**
+ * Minimal GIF89a parser that sums each frame's delay (from its
+ * Graphics Control Extension) to get the GIF's true one-loop playback
+ * duration. This is the only reliable way to know "when a GIF is
+ * done" — unlike <video>, <img> gives the browser no native event for
+ * it. Falls back to a safe default if a file can't be parsed.
+ */
+async function getGifDurationMs(url) {
+  const FALLBACK_MS = 4000;
+  try {
+    const res = await fetch(url);
+    const buf = new Uint8Array(await res.arrayBuffer());
+
+    const packed = buf[10];
+    const gctFlag = (packed & 0x80) !== 0;
+    const gctSize = packed & 0x07;
+    let i = 13;
+    if (gctFlag) i += (1 << (gctSize + 1)) * 3;
+
+    let total = 0;
+    let frames = 0;
+    let pendingDelay = null;
+
+    while (i < buf.length) {
+      const block = buf[i];
+
+      if (block === 0x21) {
+        const label = buf[i + 1];
+        i += 2;
+        if (label === 0xf9) {
+          const blockSize = buf[i];
+          const delayLo = buf[i + 2];
+          const delayHi = buf[i + 3];
+          pendingDelay = delayLo | (delayHi << 8); // centiseconds
+          i += 1 + blockSize;
+          if (buf[i] === 0x00) i += 1;
+        } else {
+          while (buf[i] !== 0x00) i += 1 + buf[i];
+          i += 1;
+        }
+      } else if (block === 0x2c) {
+        i += 1 + 8;
+        const lPacked = buf[i];
+        i += 1;
+        const lctFlag = (lPacked & 0x80) !== 0;
+        const lctSize = lPacked & 0x07;
+        if (lctFlag) i += (1 << (lctSize + 1)) * 3;
+        i += 1; // LZW min code size
+        while (buf[i] !== 0x00) i += 1 + buf[i];
+        i += 1;
+
+        const delay = pendingDelay != null ? pendingDelay : 0;
+        total += (delay > 1 ? delay : 10) * 10; // centiseconds -> ms
+        frames += 1;
+        pendingDelay = null;
+      } else if (block === 0x3b) {
+        break; // trailer
+      } else {
+        break; // malformed — bail and use what we have
+      }
+    }
+
+    return frames > 0 && total > 0 ? total : FALLBACK_MS;
+  } catch {
+    return FALLBACK_MS;
+  }
+}
+
+async function initHeroBackground(containerSelector) {
+  const container = document.querySelector(containerSelector);
+  if (!container) return;
+
+  let keys;
+  let pieces;
+  try {
+    [keys, pieces] = await Promise.all([loadBackgroundKeys(), loadGalleryPieces()]);
+  } catch {
+    return;
+  }
+
+  if (!keys.length) return; // nothing picked yet — leave the plain hero background
+
+  const byKey = new Map(pieces.map((p) => [p.key, p]));
+  const items = keys.map((k) => byKey.get(k)).filter(Boolean);
+  if (!items.length) return;
+
+  container.classList.add('is-active');
+
+  const layerA = document.createElement('div');
+  const layerB = document.createElement('div');
+  layerA.className = 'hero__bg-layer is-active';
+  layerB.className = 'hero__bg-layer';
+  container.appendChild(layerA);
+  container.appendChild(layerB);
+
+  const layers = [layerA, layerB];
+  let activeIdx = 0;
+  let itemIdx = 0;
+
+  function isGif(url) {
+    return /\.gif(\?|$)/i.test(url);
+  }
+
+  async function showNext() {
+    const piece = items[itemIdx % items.length];
+    itemIdx += 1;
+
+    const activeLayer = layers[activeIdx];
+    const nextLayer = layers[1 - activeIdx];
+
+    nextLayer.style.backgroundImage = `url("${piece.stillUrl}")`;
+    nextLayer.classList.remove('is-panning');
+    // force reflow so the pan animation restarts cleanly on each image
+    void nextLayer.offsetWidth;
+
+    const gif = isGif(piece.stillUrl);
+    if (!gif) nextLayer.classList.add('is-panning');
+
+    // crossfade: fade the new layer in, old layer out, over 0.5s
+    nextLayer.classList.add('is-active');
+    activeLayer.classList.remove('is-active');
+    activeIdx = 1 - activeIdx;
+
+    const duration = gif ? await getGifDurationMs(piece.stillUrl) : 5000;
+    setTimeout(showNext, duration);
+  }
+
+  showNext();
+}

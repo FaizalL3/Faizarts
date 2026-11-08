@@ -258,6 +258,71 @@ button {
   overflow: hidden;
 }
 
+/* Background rotation — sits behind all hero text/buttons. Empty and
+   invisible until initHeroBackground() finds pieces checked "Faizarts
+   background" in admin.html; the hero just shows its plain dark
+   canvas color until then. */
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease);
+}
+
+.hero__bg.is-active {
+  opacity: 1;
+}
+
+.hero__bg-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 0.5s linear; /* the "fade to black" crossfade */
+}
+
+.hero__bg-layer.is-active {
+  opacity: 1;
+}
+
+/* Slow 5s pan/zoom applied only to static images (not GIFs), so a
+   still picture isn't just sitting there for its whole 5s slot. */
+.hero__bg-layer.is-panning {
+  animation: hero-pan 5s linear forwards;
+}
+
+@keyframes hero-pan {
+  from { transform: scale(1.08) translate(1%, -1%); }
+  to { transform: scale(1.18) translate(-1%, 1%); }
+}
+
+/* Darkens whatever is playing behind the text so it stays readable,
+   regardless of which image/GIF is currently showing. */
+.hero__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(22, 21, 26, 0.55) 0%,
+    rgba(22, 21, 26, 0.75) 60%,
+    rgba(22, 21, 26, 0.92) 100%
+  );
+  pointer-events: none;
+}
+
+.hero__mark,
+.hero__sub,
+.hero__cta,
+.status-badge,
+.hero__story {
+  position: relative;
+  z-index: 2;
+}
+
 .hero__mark {
   font-family: var(--font-display);
   font-size: clamp(3rem, 9vw, 7rem);

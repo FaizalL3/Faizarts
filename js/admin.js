@@ -382,6 +382,7 @@ const CHIBI_PATH = `${IMAGES_PATH}/chibi.json`;
 const HALFBODY_PATH = `${IMAGES_PATH}/halfbody.json`;
 const FULLBODY_PATH = `${IMAGES_PATH}/fullbody.json`;
 const CONTACT_PATH = `${IMAGES_PATH}/contact.json`;
+const BACKGROUND_PATH = `${IMAGES_PATH}/background.json`;
 const STATUS_PATH = 'status.json'; // lives at the repo root, not under /images
 const MAX_FEATURED = 3; // matches the homepage preview grid size
 const MAX_CATEGORY_IMAGE = 1; // one example image per price category
@@ -459,6 +460,13 @@ async function saveContactKeys(token, keys) {
   return saveKeyListFile(token, CONTACT_PATH, keys, 'Update contact page image via admin panel');
 }
 
+async function loadBackgroundKeys(token) {
+  return loadKeyListFile(token, BACKGROUND_PATH);
+}
+async function saveBackgroundKeys(token, keys) {
+  return saveKeyListFile(token, BACKGROUND_PATH, keys, 'Update homepage background rotation via admin panel');
+}
+
 async function loadCommissionStatus(token) {
   const res = await fetch(
     `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${STATUS_PATH}?ref=${REPO_BRANCH}&_=${Date.now()}`,
@@ -499,6 +507,7 @@ async function fetchImagesFolder(token) {
     'halfbody.json',
     'fullbody.json',
     'contact.json',
+    'background.json',
   ]);
   return Array.isArray(data) ? data.filter((f) => f.type === 'file' && !metaFiles.has(f.name)) : [];
 }
@@ -598,7 +607,7 @@ function buildToggleCheckbox({ label, key, currentKeysRef, saveFn, maxCount, onL
   return wrap;
 }
 
-function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyKeys, fullBodyKeys, contactKeys) {
+function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyKeys, fullBodyKeys, contactKeys, backgroundKeys) {
   manageList.innerHTML = '';
 
   if (files.length === 0) {
@@ -615,6 +624,7 @@ function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyK
   const currentHalfBodyRef = [halfBodyKeys.slice()];
   const currentFullBodyRef = [fullBodyKeys.slice()];
   const currentContactRef = [contactKeys.slice()];
+  const currentBackgroundRef = [backgroundKeys.slice()];
   // one promise-chain queue per list, shared by every checkbox for that list
   const featuredQueueRef = [Promise.resolve()];
   const visibleQueueRef = [Promise.resolve()];
@@ -622,6 +632,7 @@ function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyK
   const halfBodyQueueRef = [Promise.resolve()];
   const fullBodyQueueRef = [Promise.resolve()];
   const contactQueueRef = [Promise.resolve()];
+  const backgroundQueueRef = [Promise.resolve()];
 
   files.forEach((file) => {
     const row = document.createElement('div');
@@ -662,6 +673,7 @@ function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyK
     let halfBodyLabel = null;
     let fullBodyLabel = null;
     let contactLabel = null;
+    let backgroundLabel = null;
     if (isImage) {
       const key = baseKeyFromFilename(file.name);
 
@@ -730,6 +742,17 @@ function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyK
         offLabel: `Removed ${file.name} from the Contact page.`,
         queueRef: contactQueueRef,
       });
+
+      backgroundLabel = buildToggleCheckbox({
+        label: 'Faizarts background',
+        key,
+        currentKeysRef: currentBackgroundRef,
+        saveFn: saveBackgroundKeys,
+        maxCount: null, // no cap — this is a rotation, add as many as you like
+        onLabel: `${file.name} added to the homepage background rotation.`,
+        offLabel: `${file.name} removed from the homepage background rotation.`,
+        queueRef: backgroundQueueRef,
+      });
     }
 
     const deleteBtn = document.createElement('button');
@@ -785,6 +808,7 @@ function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyK
             { ref: currentHalfBodyRef, queueRef: halfBodyQueueRef, saveFn: saveHalfBodyKeys, label: 'Half Body example' },
             { ref: currentFullBodyRef, queueRef: fullBodyQueueRef, saveFn: saveFullBodyKeys, label: 'Full Body example' },
             { ref: currentContactRef, queueRef: contactQueueRef, saveFn: saveContactKeys, label: 'Contact' },
+            { ref: currentBackgroundRef, queueRef: backgroundQueueRef, saveFn: saveBackgroundKeys, label: 'Faizarts background' },
           ];
 
           listsToClean.forEach(({ ref, queueRef, saveFn, label }) => {
@@ -816,6 +840,7 @@ function renderManageList(files, featuredKeys, visibleKeys, chibiKeys, halfBodyK
     if (halfBodyLabel) row.appendChild(halfBodyLabel);
     if (fullBodyLabel) row.appendChild(fullBodyLabel);
     if (contactLabel) row.appendChild(contactLabel);
+    if (backgroundLabel) row.appendChild(backgroundLabel);
     row.appendChild(deleteBtn);
     manageList.appendChild(row);
   });
@@ -833,6 +858,7 @@ async function loadManageList() {
     { load: loadHalfBodyKeys, save: saveHalfBodyKeys, label: 'Half Body example' },
     { load: loadFullBodyKeys, save: saveFullBodyKeys, label: 'Full Body example' },
     { load: loadContactKeys, save: saveContactKeys, label: 'Contact' },
+    { load: loadBackgroundKeys, save: saveBackgroundKeys, label: 'Faizarts background' },
   ];
 
   try {
