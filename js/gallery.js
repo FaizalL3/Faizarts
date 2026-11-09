@@ -394,21 +394,26 @@ async function initHeroBackground(containerSelector) {
 
     const activeLayer = layers[activeIdx];
     const nextLayer = layers[1 - activeIdx];
-
-    nextLayer.style.backgroundImage = `url("${piece.stillUrl}")`;
-    nextLayer.classList.remove('is-panning');
-    // force reflow so the pan animation restarts cleanly on each image
-    void nextLayer.offsetWidth;
+    const FADE_MS = 500;
 
     const gif = isGif(piece.stillUrl);
-    if (!gif) nextLayer.classList.add('is-panning');
+    const duration = gif ? await getGifDurationMs(piece.stillUrl) : 5000;
 
-    // crossfade: fade the new layer in, old layer out, over 0.5s
+    // previous layer has already faded to black by now; cut straight to
+    // the new item (no transition) so it starts at full brightness
+    nextLayer.style.transition = 'none';
+    nextLayer.style.backgroundImage = `url("${piece.stillUrl}")`;
+    nextLayer.classList.remove('is-panning');
+    void nextLayer.offsetWidth; // reflow: restarts the pan animation
+    if (!gif) nextLayer.classList.add('is-panning');
     nextLayer.classList.add('is-active');
     activeLayer.classList.remove('is-active');
+    void nextLayer.offsetWidth;
+    nextLayer.style.transition = ''; // restore the 0.5s fade for the exit
     activeIdx = 1 - activeIdx;
 
-    const duration = gif ? await getGifDurationMs(piece.stillUrl) : 5000;
+    // fade to black during the LAST 0.5s of this item's slot
+    setTimeout(() => nextLayer.classList.remove('is-active'), Math.max(duration - FADE_MS, 0));
     setTimeout(showNext, duration);
   }
 
